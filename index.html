@@ -1,0 +1,2427 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+<title>집단 출석 체크</title>
+
+<style>
+:root{
+  --blue:#2864e8;
+  --bg:#eef6ff;
+  --text:#172033;
+  --muted:#7b8798;
+  --line:#e4e9f0;
+  --green:#17a85b;
+  --orange:#f26b21;
+  --red:#e52b2b;
+  --nav-h:72px;
+  --header-h:80px;
+}
+
+*{
+  box-sizing:border-box;
+}
+
+html,
+body{
+  margin:0;
+  padding:0;
+  width:100%;
+  min-height:100%;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Noto Sans KR",
+    "Apple SD Gothic Neo",
+    sans-serif;
+  color:var(--text);
+  background:var(--bg);
+}
+
+body{
+  padding-top:var(--header-h);
+  padding-bottom:var(--nav-h);
+}
+
+/* =========================
+   상단 고정
+========================= */
+
+.top-header{
+  position:fixed;
+  z-index:1000;
+  top:0;
+  left:0;
+  right:0;
+  background:#fff;
+  border-bottom:1px solid #e8edf4;
+  padding:14px 20px 12px;
+}
+
+.header-inner{
+  max-width:860px;
+  margin:0 auto;
+}
+
+.header-title{
+  font-size:30px;
+  line-height:1.15;
+  font-weight:800;
+  letter-spacing:-1.2px;
+  color:#2055d3;
+}
+
+.sync-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-top:8px;
+  padding:7px 13px;
+  border-radius:18px;
+  background:#dcecff;
+  color:#2161d9;
+  font-size:14px;
+  font-weight:700;
+}
+
+/* =========================
+   본문
+========================= */
+
+main{
+  max-width:860px;
+  margin:0 auto;
+  padding:24px 18px 30px;
+}
+
+.page{
+  display:none;
+}
+
+.page.active{
+  display:block;
+}
+
+/* =========================
+   공통 카드
+========================= */
+
+.section-card{
+  background:#fff;
+  border-radius:26px;
+  border:1px solid #dce8f8;
+  box-shadow:0 3px 12px rgba(40,80,130,.08);
+  padding:22px;
+}
+
+/* =========================
+   출석부
+========================= */
+
+.month-card{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  min-height:108px;
+  margin-bottom:28px;
+  padding:20px 22px;
+}
+
+.month-card button{
+  border:0;
+  background:transparent;
+  color:var(--blue);
+  font-weight:800;
+  font-size:22px;
+}
+
+.month-title{
+  font-size:28px;
+  font-weight:800;
+}
+
+.meeting-card{
+  overflow:hidden;
+  background:#fff;
+  border-radius:27px;
+  box-shadow:0 3px 12px rgba(40,80,130,.08);
+  margin-bottom:28px;
+}
+
+.meeting-head{
+  min-height:88px;
+  background:#fafbfc;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 20px;
+}
+
+.date-wrap{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.date{
+  font-size:25px;
+  font-weight:800;
+}
+
+.day{
+  font-size:18px;
+  color:#718096;
+}
+
+.meeting-tag{
+  padding:7px 12px;
+  border-radius:7px;
+  font-size:14px;
+  font-weight:800;
+}
+
+.tag-mid{
+  background:#dcf9e9;
+  color:#13944e;
+  border:1px solid #a8efc8;
+}
+
+.tag-week{
+  background:#fff0e4;
+  color:#e45d17;
+  border:1px solid #ffc48e;
+}
+
+.count-badge{
+  border:1px solid #dce2eb;
+  background:#fff;
+  border-radius:7px;
+  padding:9px 12px;
+  color:var(--blue);
+  font-weight:800;
+  font-size:17px;
+  white-space:nowrap;
+}
+
+.member-row{
+  min-height:104px;
+  padding:20px 20px 20px 34px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:1px solid #f0f2f5;
+}
+
+.member-row:last-child{
+  border-bottom:0;
+}
+
+.member-name{
+  font-size:24px;
+  font-weight:800;
+}
+
+.attend-btn{
+  min-width:112px;
+  height:50px;
+  border:0;
+  border-radius:28px;
+  background:#f1f2f5;
+  color:#9aa1ac;
+  font-size:18px;
+  font-weight:800;
+}
+
+.attend-btn.present{
+  background:#2f68ea;
+  color:#fff;
+}
+
+.empty{
+  padding:40px 15px;
+  text-align:center;
+  color:var(--muted);
+  font-size:17px;
+}
+
+/* =========================
+   멤버
+========================= */
+
+.panel{
+  background:#fff;
+  border-radius:26px;
+  border-top:6px solid var(--blue);
+  box-shadow:0 3px 12px rgba(40,80,130,.08);
+  padding:28px 34px;
+  margin-bottom:28px;
+}
+
+.panel h2{
+  margin:0 0 20px;
+  font-size:27px;
+  color:#214caa;
+}
+
+.add-row{
+  display:flex;
+  gap:14px;
+}
+
+.add-row input{
+  flex:1;
+  min-width:0;
+  height:62px;
+  border:1px solid #dce2e9;
+  border-radius:20px;
+  padding:0 20px;
+  font-size:22px;
+  outline:none;
+  background:#fafbfc;
+}
+
+.add-row input:focus{
+  border-color:var(--blue);
+  background:#fff;
+}
+
+.primary-btn{
+  height:62px;
+  padding:0 32px;
+  border:0;
+  border-radius:20px;
+  background:var(--blue);
+  color:#fff;
+  font-size:21px;
+  font-weight:800;
+}
+
+.list-panel{
+  border-top:0;
+}
+
+.panel-title{
+  font-size:26px;
+  font-weight:800;
+  margin:0 0 24px;
+}
+
+.person{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  min-height:72px;
+  border-bottom:1px solid #edf0f4;
+  font-size:22px;
+  font-weight:700;
+}
+
+.person:last-child{
+  border-bottom:0;
+}
+
+.delete-btn{
+  border:0;
+  background:#fff0f0;
+  color:#e52222;
+  border-radius:14px;
+  padding:10px 17px;
+  font-weight:800;
+}
+
+/* =========================
+   통계
+========================= */
+
+.stat-switch{
+  display:flex;
+  gap:12px;
+  margin-bottom:28px;
+}
+
+.stat-switch button{
+  flex:1;
+  height:60px;
+  border:0;
+  border-radius:15px;
+  background:#fff;
+  color:#707887;
+  font-size:20px;
+  font-weight:800;
+  box-shadow:0 2px 8px rgba(30,50,80,.08);
+}
+
+.stat-switch button.active{
+  color:var(--blue);
+}
+
+.stats-panel{
+  border-top:6px solid #7f86ee;
+}
+
+.stats-panel h2{
+  color:#3037a8;
+  margin-bottom:20px;
+}
+
+.person-stat{
+  background:#fafbfc;
+  border:1px solid #edf0f3;
+  border-radius:24px;
+  padding:28px;
+  margin-top:20px;
+}
+
+.person-stat h3{
+  font-size:25px;
+  margin:0 0 22px;
+}
+
+.stat-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+}
+
+.stat-box{
+  background:#fff;
+  border:1px solid #e2e6eb;
+  border-radius:18px;
+  padding:20px 10px 14px;
+  text-align:center;
+  box-shadow:0 2px 5px rgba(20,40,70,.08);
+}
+
+.stat-label{
+  font-size:17px;
+  color:#9aa1ae;
+  font-weight:800;
+}
+
+.stat-num{
+  font-size:32px;
+  font-weight:900;
+  margin:5px 0 2px;
+}
+
+.stat-num span{
+  font-size:17px;
+  color:#9ca5b3;
+  font-weight:500;
+}
+
+.rate{
+  font-size:19px;
+  font-weight:900;
+  border-radius:7px;
+  padding:3px;
+}
+
+.rate.all{
+  color:#7377f0;
+  background:#edf0ff;
+}
+
+.rate.mid{
+  color:#18a85b;
+  background:#e9faef;
+}
+
+.rate.week{
+  color:#f2681b;
+  background:#fff2e6;
+}
+
+/* =========================
+   설정
+========================= */
+
+.settings-panel{
+  border-top-color:#687080;
+}
+
+.setting-group{
+  margin-top:28px;
+}
+
+.setting-group h3{
+  font-size:23px;
+  margin:0 0 10px;
+}
+
+.setting-desc{
+  color:#738096;
+  margin:0 0 14px;
+  font-size:16px;
+}
+
+.text-setting{
+  width:100%;
+  height:58px;
+  border:1px solid #dfe4eb;
+  border-radius:18px;
+  padding:0 18px;
+  font-size:20px;
+  background:#fafbfc;
+}
+
+.weekdays{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:10px;
+}
+
+.weekday{
+  height:68px;
+  border:1px solid #dce2ea;
+  background:#fff;
+  border-radius:18px;
+  color:#707a89;
+  font-size:21px;
+  font-weight:800;
+}
+
+.weekday.selected{
+  background:var(--blue);
+  color:#fff;
+  border-color:var(--blue);
+  box-shadow:0 4px 9px rgba(40,100,232,.2);
+}
+
+.danger-panel{
+  background:#fff5f5;
+  border:1px solid #ffbdbd;
+  border-radius:26px;
+  padding:28px 34px;
+}
+
+.danger-panel h2{
+  margin:0 0 10px;
+  color:#d32222;
+  font-size:27px;
+}
+
+.danger-panel p{
+  margin:0 0 22px;
+  color:#e52b2b;
+  font-size:17px;
+}
+
+.danger-btn{
+  width:100%;
+  height:62px;
+  border:0;
+  border-radius:19px;
+  background:#e82424;
+  color:#fff;
+  font-size:21px;
+  font-weight:800;
+}
+
+/* =========================
+   하단 고정 메뉴
+========================= */
+
+.bottom-nav{
+  position:fixed;
+  z-index:1000;
+  left:0;
+  right:0;
+  bottom:0;
+  height:var(--nav-h);
+  background:#fff;
+  border-top:1px solid #dfe5ed;
+  box-shadow:0 -3px 12px rgba(30,50,80,.06);
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+}
+
+.nav-btn{
+  position:relative;
+  border:0;
+  background:#fff;
+  color:#727b89;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  font-size:15px;
+  font-weight:700;
+}
+
+.nav-icon{
+  font-size:22px;
+  line-height:1;
+}
+
+.nav-btn.active{
+  color:var(--blue);
+}
+
+.nav-btn.active::after{
+  content:"";
+  position:absolute;
+  left:8%;
+  right:8%;
+  bottom:0;
+  height:3px;
+  background:var(--blue);
+}
+
+/* =========================
+   알림
+========================= */
+
+.toast{
+  position:fixed;
+  z-index:2000;
+  left:50%;
+  bottom:calc(var(--nav-h) + 18px);
+  transform:translateX(-50%) translateY(10px);
+  background:#172033;
+  color:#fff;
+  padding:11px 18px;
+  border-radius:22px;
+  font-size:15px;
+  opacity:0;
+  pointer-events:none;
+  transition:.25s;
+}
+
+.toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+
+/* =========================
+   휴대폰
+========================= */
+
+@media(max-width:600px){
+
+  :root{
+    --nav-h:68px;
+  }
+
+  .top-header{
+    padding:11px 16px 10px;
+  }
+
+  .header-title{
+    font-size:28px;
+  }
+
+  main{
+    padding:20px 12px 24px;
+  }
+
+  .month-card{
+    min-height:96px;
+    padding:16px;
+    margin-bottom:22px;
+  }
+
+  .month-title{
+    font-size:23px;
+  }
+
+  .month-card button{
+    font-size:19px;
+  }
+
+  .meeting-head{
+    padding:13px 14px;
+    min-height:80px;
+  }
+
+  .date{
+    font-size:20px;
+  }
+
+  .day{
+    font-size:16px;
+  }
+
+  .meeting-tag{
+    font-size:13px;
+    padding:6px 9px;
+  }
+
+  .count-badge{
+    font-size:15px;
+    padding:8px;
+  }
+
+  .member-row{
+    padding:17px 14px 17px 20px;
+    min-height:92px;
+  }
+
+  .member-name{
+    font-size:21px;
+  }
+
+  .attend-btn{
+    min-width:98px;
+    height:46px;
+    font-size:17px;
+  }
+
+  .panel{
+    padding:23px 20px;
+    margin-bottom:22px;
+  }
+
+  .panel h2,
+  .danger-panel h2{
+    font-size:24px;
+  }
+
+  .add-row{
+    gap:9px;
+  }
+
+  .add-row input{
+    height:58px;
+    font-size:19px;
+    padding:0 15px;
+  }
+
+  .primary-btn{
+    height:58px;
+    padding:0 22px;
+    font-size:19px;
+  }
+
+  .person{
+    font-size:20px;
+  }
+
+  .stat-grid{
+    gap:7px;
+  }
+
+  .person-stat{
+    padding:22px 14px;
+  }
+
+  .person-stat h3{
+    font-size:22px;
+  }
+
+  .stat-box{
+    padding:16px 4px 12px;
+  }
+
+  .stat-label{
+    font-size:14px;
+  }
+
+  .stat-num{
+    font-size:28px;
+  }
+
+  .rate{
+    font-size:16px;
+  }
+
+  .weekday{
+    height:57px;
+    font-size:18px;
+    border-radius:14px;
+  }
+
+  .weekdays{
+    gap:5px;
+  }
+
+  .danger-panel{
+    padding:24px 20px;
+  }
+
+  .nav-btn{
+    font-size:14px;
+  }
+
+  .nav-icon{
+    font-size:20px;
+  }
+}
+
+/* 아주 작은 휴대폰 */
+
+@media(max-width:380px){
+
+  .header-title{
+    font-size:26px;
+  }
+
+  .sync-badge{
+    font-size:13px;
+  }
+
+  .date{
+    font-size:18px;
+  }
+
+  .meeting-head{
+    gap:6px;
+  }
+
+  .meeting-tag{
+    display:none;
+  }
+
+  .count-badge{
+    font-size:14px;
+  }
+
+  .member-name{
+    font-size:20px;
+  }
+
+  .attend-btn{
+    min-width:88px;
+  }
+
+  .nav-btn{
+    font-size:13px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- =========================
+     상단 고정
+========================= -->
+
+<header class="top-header" id="topHeader">
+
+  <div class="header-inner">
+
+    <div class="header-title" id="groupTitle">
+      집단 출석 체크
+    </div>
+
+    <div class="sync-badge">
+      🌐 클라우드 연동
+    </div>
+
+  </div>
+
+</header>
+
+
+<main>
+
+<!-- =========================
+     출석부
+========================= -->
+
+<section class="page active" id="attendancePage">
+
+  <div class="section-card month-card">
+
+    <button id="prevMonth">
+      ◀ 이전
+    </button>
+
+    <div class="month-title" id="monthTitle">
+    </div>
+
+    <button id="nextMonth">
+      다음 ▶
+    </button>
+
+  </div>
+
+  <div id="meetingList">
+  </div>
+
+</section>
+
+
+<!-- =========================
+     멤버
+========================= -->
+
+<section class="page" id="membersPage">
+
+  <div class="panel">
+
+    <h2>
+      새 멤버 추가
+    </h2>
+
+    <div class="add-row">
+
+      <input
+        id="memberInput"
+        type="text"
+        placeholder="이름을 입력하세요"
+        maxlength="30"
+      >
+
+      <button
+        class="primary-btn"
+        id="addMember"
+      >
+        추가
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <div class="panel list-panel">
+
+    <div
+      class="panel-title"
+      id="memberCountTitle"
+    >
+      등록된 멤버 0명
+    </div>
+
+    <div id="memberList">
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================
+     통계
+========================= -->
+
+<section class="page" id="statsPage">
+
+  <div class="stat-switch">
+
+    <button
+      class="active"
+      data-stat="month"
+    >
+      이번 달 통계
+    </button>
+
+    <button
+      data-stat="year"
+    >
+      올해 통계
+    </button>
+
+  </div>
+
+
+  <div class="panel stats-panel">
+
+    <h2 id="statsTitle">
+      2026년 9월 집회 출석 통계
+    </h2>
+
+    <div id="statsList">
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================
+     설정
+========================= -->
+
+<section class="page" id="settingsPage">
+
+  <div class="panel settings-panel">
+
+    <div class="setting-group">
+
+      <h2 style="margin:0;font-size:27px;">
+        집단/회중 이름 설정
+      </h2>
+
+      <input
+        class="text-setting"
+        id="groupNameInput"
+        style="margin-top:18px"
+        value="집단 출석 체크"
+      >
+
+    </div>
+
+
+    <div class="setting-group">
+
+      <h3>
+        출석 요일 선택 (중복 선택 가능)
+      </h3>
+
+      <p class="setting-desc">
+        선택한 요일에 맞추어 출석부가 자동으로 생성됩니다.
+      </p>
+
+      <div
+        class="weekdays"
+        id="weekdayButtons"
+      >
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="danger-panel">
+
+    <h2>
+      데이터 영구 초기화
+    </h2>
+
+    <p>
+      멤버와 모든 출석 기록을 삭제하고 처음으로 되돌립니다.
+    </p>
+
+    <button
+      class="danger-btn"
+      id="resetAll"
+    >
+      전체 초기화
+    </button>
+
+  </div>
+
+</section>
+
+</main>
+
+
+<!-- =========================
+     하단 고정 메뉴
+========================= -->
+
+<nav class="bottom-nav">
+
+  <button
+    class="nav-btn active"
+    data-page="attendancePage"
+  >
+
+    <span class="nav-icon">
+      ☑️
+    </span>
+
+    <span>
+      출석부
+    </span>
+
+  </button>
+
+
+  <button
+    class="nav-btn"
+    data-page="membersPage"
+  >
+
+    <span class="nav-icon">
+      👥
+    </span>
+
+    <span>
+      멤버
+    </span>
+
+  </button>
+
+
+  <button
+    class="nav-btn"
+    data-page="statsPage"
+  >
+
+    <span class="nav-icon">
+      📊
+    </span>
+
+    <span>
+      통계
+    </span>
+
+  </button>
+
+
+  <button
+    class="nav-btn"
+    data-page="settingsPage"
+  >
+
+    <span class="nav-icon">
+      ⚙️
+    </span>
+
+    <span>
+      설정
+    </span>
+
+  </button>
+
+</nav>
+
+
+<div
+  class="toast"
+  id="toast"
+>
+</div>
+
+
+<script>
+
+/* ==========================================
+   저장 데이터
+========================================== */
+
+const STORAGE_KEY = "groupAttendance_v1";
+
+
+const defaultData = {
+
+  groupName:
+    "집단 출석 체크",
+
+  members:[
+    "성낙봉",
+    "계살구"
+  ],
+
+  /* 화요일 / 토요일 */
+  weekdays:[
+    2,
+    6
+  ],
+
+  attendance:{}
+
+};
+
+
+let data = loadData();
+
+
+/*
+   처음 화면은 2026년 9월
+*/
+let currentDate =
+  new Date(2026,8,1);
+
+
+/* ==========================================
+   데이터 불러오기
+========================================== */
+
+function loadData(){
+
+  try{
+
+    const saved =
+      JSON.parse(
+        localStorage.getItem(STORAGE_KEY)
+      );
+
+    if(saved){
+
+      return {
+        ...structuredClone(defaultData),
+        ...saved
+      };
+
+    }
+
+    return structuredClone(defaultData);
+
+  }catch(e){
+
+    return structuredClone(defaultData);
+
+  }
+
+}
+
+
+/* ==========================================
+   데이터 저장
+========================================== */
+
+function saveData(){
+
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(data)
+  );
+
+}
+
+
+/* ==========================================
+   알림
+========================================== */
+
+function showToast(message){
+
+  const el =
+    document.getElementById("toast");
+
+  el.textContent =
+    message;
+
+  el.classList.add("show");
+
+  clearTimeout(
+    window.__toastTimer
+  );
+
+  window.__toastTimer =
+    setTimeout(
+      ()=>{
+        el.classList.remove("show");
+      },
+      1800
+    );
+
+}
+
+
+/* ==========================================
+   상단 제목
+========================================== */
+
+function updateHeader(){
+
+  document.getElementById(
+    "groupTitle"
+  ).textContent =
+    data.groupName ||
+    "집단 출석 체크";
+
+}
+
+
+/* ==========================================
+   숫자 두 자리
+========================================== */
+
+function pad(n){
+
+  return String(n)
+    .padStart(2,"0");
+
+}
+
+
+/* ==========================================
+   날짜 KEY
+========================================== */
+
+function dateKey(date){
+
+  return (
+    date.getFullYear()
+    + "-"
+    + pad(date.getMonth()+1)
+    + "-"
+    + pad(date.getDate())
+  );
+
+}
+
+
+/* ==========================================
+   요일
+========================================== */
+
+function koreanDay(date){
+
+  return [
+    "일",
+    "월",
+    "화",
+    "수",
+    "목",
+    "금",
+    "토"
+  ][date.getDay()];
+
+}
+
+
+/* ==========================================
+   해당 월의 집회 날짜
+========================================== */
+
+function meetingsForMonth(
+  year,
+  month
+){
+
+  const result = [];
+
+  const days =
+    new Date(
+      year,
+      month + 1,
+      0
+    ).getDate();
+
+
+  for(
+    let day = 1;
+    day <= days;
+    day++
+  ){
+
+    const date =
+      new Date(
+        year,
+        month,
+        day
+      );
+
+
+    if(
+      data.weekdays
+        .includes(
+          date.getDay()
+        )
+    ){
+
+      result.push(date);
+
+    }
+
+  }
+
+
+  return result;
+
+}
+
+
+/* ==========================================
+   출석부 표시
+========================================== */
+
+function renderAttendance(){
+
+  const year =
+    currentDate.getFullYear();
+
+  const month =
+    currentDate.getMonth();
+
+
+  document.getElementById(
+    "monthTitle"
+  ).textContent =
+    `${year}년 ${month+1}월`;
+
+
+  const meetings =
+    meetingsForMonth(
+      year,
+      month
+    );
+
+
+  const wrap =
+    document.getElementById(
+      "meetingList"
+    );
+
+
+  if(!meetings.length){
+
+    wrap.innerHTML = `
+      <div class="section-card empty">
+        선택된 출석 요일이 없습니다.<br>
+        설정에서 요일을 선택해 주세요.
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  wrap.innerHTML =
+    meetings.map(
+      date=>{
+
+        const key =
+          dateKey(date);
+
+
+        const type =
+          date.getDay() === 2
+          ? "주중 집회"
+          : "주말 집회";
+
+
+        const tagClass =
+          date.getDay() === 2
+          ? "tag-mid"
+          : "tag-week";
+
+
+        const presentCount =
+          data.members.filter(
+            name =>
+              data.attendance[key]
+              &&
+              data.attendance[key][name]
+          ).length;
+
+
+        const rows =
+          data.members.map(
+            name=>{
+
+              const present =
+                !!(
+                  data.attendance[key]
+                  &&
+                  data.attendance[key][name]
+                );
+
+
+              return `
+
+                <div class="member-row">
+
+                  <div class="member-name">
+                    ${escapeHtml(name)}
+                  </div>
+
+                  <button
+                    class="attend-btn ${present ? "present" : ""}"
+                    data-date="${key}"
+                    data-name="${escapeAttr(name)}"
+                  >
+                    ${
+                      present
+                      ? "출석 완료"
+                      : "출석"
+                    }
+                  </button>
+
+                </div>
+
+              `;
+
+            }
+          ).join("");
+
+
+        return `
+
+          <div class="meeting-card">
+
+            <div class="meeting-head">
+
+              <div class="date-wrap">
+
+                <span class="date">
+                  ${key}
+                </span>
+
+                <span class="day">
+                  (${koreanDay(date)})
+                </span>
+
+                <span
+                  class="meeting-tag ${tagClass}"
+                >
+                  ${type}
+                </span>
+
+              </div>
+
+
+              <div class="count-badge">
+
+                ${presentCount}
+                /
+                ${data.members.length}
+                명 출석
+
+              </div>
+
+            </div>
+
+
+            ${
+              rows ||
+              `
+                <div class="empty">
+                  등록된 멤버가 없습니다.
+                </div>
+              `
+            }
+
+          </div>
+
+        `;
+
+      }
+    ).join("");
+
+
+  /*
+     출석 버튼
+  */
+
+  wrap
+    .querySelectorAll(".attend-btn")
+    .forEach(
+      button=>{
+
+        button.addEventListener(
+          "click",
+          ()=>{
+
+            const key =
+              button.dataset.date;
+
+            const name =
+              button.dataset.name;
+
+
+            if(
+              !data.attendance[key]
+            ){
+
+              data.attendance[key] = {};
+
+            }
+
+
+            data.attendance[key][name] =
+              !data.attendance[key][name];
+
+
+            saveData();
+
+            renderAttendance();
+
+            renderStats();
+
+          }
+        );
+
+      }
+    );
+
+}
+
+
+/* ==========================================
+   멤버 표시
+========================================== */
+
+function renderMembers(){
+
+  document.getElementById(
+    "memberCountTitle"
+  ).textContent =
+    `등록된 멤버 ${data.members.length}명`;
+
+
+  const wrap =
+    document.getElementById(
+      "memberList"
+    );
+
+
+  if(!data.members.length){
+
+    wrap.innerHTML = `
+      <div class="empty">
+        등록된 멤버가 없습니다.
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  wrap.innerHTML =
+    data.members.map(
+      (name,index)=>`
+
+        <div class="person">
+
+          <span>
+            ${escapeHtml(name)}
+          </span>
+
+          <button
+            class="delete-btn"
+            data-index="${index}"
+          >
+            삭제
+          </button>
+
+        </div>
+
+      `
+    ).join("");
+
+
+  wrap
+    .querySelectorAll(".delete-btn")
+    .forEach(
+      button=>{
+
+        button.onclick =
+          ()=>{
+
+            const index =
+              Number(
+                button.dataset.index
+              );
+
+
+            const name =
+              data.members[index];
+
+
+            if(
+              confirm(
+                `"${name}" 멤버를 삭제할까요?`
+              )
+            ){
+
+              data.members.splice(
+                index,
+                1
+              );
+
+
+              /*
+                 해당 멤버의 출석 기록도 삭제
+              */
+
+              Object.keys(
+                data.attendance
+              ).forEach(
+                key=>{
+
+                  if(
+                    data.attendance[key]
+                  ){
+
+                    delete
+                      data.attendance[key][name];
+
+                  }
+
+                }
+              );
+
+
+              saveData();
+
+              renderAll();
+
+              showToast(
+                "멤버가 삭제되었습니다."
+              );
+
+            }
+
+          };
+
+      }
+    );
+
+}
+
+
+/* ==========================================
+   통계
+========================================== */
+
+let statsMode =
+  "month";
+
+
+function renderStats(){
+
+  const year =
+    currentDate.getFullYear();
+
+  const month =
+    currentDate.getMonth();
+
+
+  document.getElementById(
+    "statsTitle"
+  ).textContent =
+
+    statsMode === "month"
+
+    ? `${year}년 ${month+1}월 집회 출석 통계`
+
+    : `${year}년 집회 출석 통계`;
+
+
+  const meetings = [];
+
+
+  if(
+    statsMode === "month"
+  ){
+
+    meetings.push(
+      ...meetingsForMonth(
+        year,
+        month
+      )
+    );
+
+  }else{
+
+    for(
+      let m=0;
+      m<12;
+      m++
+    ){
+
+      meetings.push(
+        ...meetingsForMonth(
+          year,
+          m
+        )
+      );
+
+    }
+
+  }
+
+
+  const allTotal =
+    meetings.length;
+
+
+  const midMeetings =
+    meetings.filter(
+      date =>
+        date.getDay() === 2
+    );
+
+
+  const weekMeetings =
+    meetings.filter(
+      date =>
+        date.getDay() === 6
+    );
+
+
+  const wrap =
+    document.getElementById(
+      "statsList"
+    );
+
+
+  if(!data.members.length){
+
+    wrap.innerHTML = `
+      <div class="empty">
+        등록된 멤버가 없습니다.
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  wrap.innerHTML =
+    data.members.map(
+      name=>{
+
+        function count(list){
+
+          return list.filter(
+            date=>{
+
+              const key =
+                dateKey(date);
+
+              return (
+                data.attendance[key]
+                &&
+                data.attendance[key][name]
+              );
+
+            }
+          ).length;
+
+        }
+
+
+        const all =
+          count(meetings);
+
+        const mid =
+          count(midMeetings);
+
+        const week =
+          count(weekMeetings);
+
+
+        function percent(
+          number,
+          total
+        ){
+
+          if(!total){
+            return 0;
+          }
+
+          return Math.round(
+            number / total * 100
+          );
+
+        }
+
+
+        return `
+
+          <div class="person-stat">
+
+            <h3>
+              ${escapeHtml(name)}
+            </h3>
+
+
+            <div class="stat-grid">
+
+              <div class="stat-box">
+
+                <div class="stat-label">
+                  전체
+                </div>
+
+                <div
+                  class="stat-num"
+                  style="color:#5650e8"
+                >
+                  ${all}
+                  <span>
+                    / ${allTotal}
+                  </span>
+                </div>
+
+                <div class="rate all">
+                  ${percent(all,allTotal)}%
+                </div>
+
+              </div>
+
+
+              <div class="stat-box">
+
+                <div class="stat-label">
+                  주중 집회
+                </div>
+
+                <div
+                  class="stat-num"
+                  style="color:#17a85b"
+                >
+                  ${mid}
+                  <span>
+                    / ${midMeetings.length}
+                  </span>
+                </div>
+
+                <div class="rate mid">
+                  ${percent(
+                    mid,
+                    midMeetings.length
+                  )}%
+                </div>
+
+              </div>
+
+
+              <div class="stat-box">
+
+                <div class="stat-label">
+                  주말 집회
+                </div>
+
+                <div
+                  class="stat-num"
+                  style="color:#f2681b"
+                >
+                  ${week}
+                  <span>
+                    / ${weekMeetings.length}
+                  </span>
+                </div>
+
+                <div class="rate week">
+                  ${percent(
+                    week,
+                    weekMeetings.length
+                  )}%
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        `;
+
+      }
+    ).join("");
+
+}
+
+
+/* ==========================================
+   설정
+========================================== */
+
+function renderSettings(){
+
+  document.getElementById(
+    "groupNameInput"
+  ).value =
+    data.groupName;
+
+
+  const labels = [
+    "일",
+    "월",
+    "화",
+    "수",
+    "목",
+    "금",
+    "토"
+  ];
+
+
+  document.getElementById(
+    "weekdayButtons"
+  ).innerHTML =
+
+    labels.map(
+      (label,index)=>`
+
+        <button
+          class="weekday ${
+            data.weekdays.includes(index)
+            ? "selected"
+            : ""
+          }"
+          data-day="${index}"
+        >
+          ${label}
+        </button>
+
+      `
+    ).join("");
+
+
+  document
+    .querySelectorAll(".weekday")
+    .forEach(
+      button=>{
+
+        button.onclick =
+          ()=>{
+
+            const day =
+              Number(
+                button.dataset.day
+              );
+
+
+            if(
+              data.weekdays.includes(day)
+            ){
+
+              data.weekdays =
+                data.weekdays.filter(
+                  value =>
+                    value !== day
+                );
+
+            }else{
+
+              data.weekdays.push(day);
+
+              data.weekdays.sort();
+
+            }
+
+
+            saveData();
+
+            renderSettings();
+
+            renderAttendance();
+
+            renderStats();
+
+          };
+
+      }
+    );
+
+}
+
+
+/* ==========================================
+   전체 화면 갱신
+========================================== */
+
+function renderAll(){
+
+  updateHeader();
+
+  renderAttendance();
+
+  renderMembers();
+
+  renderStats();
+
+  renderSettings();
+
+}
+
+
+/* ==========================================
+   하단 메뉴
+========================================== */
+
+document
+  .querySelectorAll(".nav-btn")
+  .forEach(
+    button=>{
+
+      button.addEventListener(
+        "click",
+        ()=>{
+
+          const page =
+            button.dataset.page;
+
+
+          /*
+             모든 페이지 숨김
+          */
+
+          document
+            .querySelectorAll(".page")
+            .forEach(
+              pageElement =>
+                pageElement
+                  .classList
+                  .remove("active")
+            );
+
+
+          /*
+             선택한 페이지 표시
+          */
+
+          document
+            .getElementById(page)
+            .classList
+            .add("active");
+
+
+          /*
+             메뉴 활성화
+          */
+
+          document
+            .querySelectorAll(".nav-btn")
+            .forEach(
+              nav =>
+                nav.classList
+                  .remove("active")
+            );
+
+
+          button
+            .classList
+            .add("active");
+
+
+          window.scrollTo({
+            top:0,
+            behavior:"smooth"
+          });
+
+        }
+      );
+
+    }
+  );
+
+
+/* ==========================================
+   이전 달
+========================================== */
+
+document.getElementById(
+  "prevMonth"
+).onclick = ()=>{
+
+  currentDate.setMonth(
+    currentDate.getMonth() - 1
+  );
+
+  renderAttendance();
+
+  renderStats();
+
+};
+
+
+/* ==========================================
+   다음 달
+========================================== */
+
+document.getElementById(
+  "nextMonth"
+).onclick = ()=>{
+
+  currentDate.setMonth(
+    currentDate.getMonth() + 1
+  );
+
+  renderAttendance();
+
+  renderStats();
+
+};
+
+
+/* ==========================================
+   멤버 추가
+========================================== */
+
+document.getElementById(
+  "addMember"
+).onclick =
+  addMember;
+
+
+document.getElementById(
+  "memberInput"
+).addEventListener(
+  "keydown",
+  event=>{
+
+    if(
+      event.key === "Enter"
+    ){
+
+      addMember();
+
+    }
+
+  }
+);
+
+
+function addMember(){
+
+  const input =
+    document.getElementById(
+      "memberInput"
+    );
+
+
+  const name =
+    input.value.trim();
+
+
+  if(!name){
+
+    showToast(
+      "이름을 입력해 주세요."
+    );
+
+    return;
+
+  }
+
+
+  if(
+    data.members.includes(name)
+  ){
+
+    showToast(
+      "이미 등록된 멤버입니다."
+    );
+
+    return;
+
+  }
+
+
+  data.members.push(name);
+
+
+  saveData();
+
+
+  input.value = "";
+
+
+  renderAll();
+
+
+  showToast(
+    "멤버가 추가되었습니다."
+  );
+
+}
+
+
+/* ==========================================
+   집단 이름 저장
+========================================== */
+
+document.getElementById(
+  "groupNameInput"
+).addEventListener(
+  "change",
+  event=>{
+
+    data.groupName =
+      event.target.value.trim()
+      ||
+      "집단 출석 체크";
+
+
+    saveData();
+
+    updateHeader();
+
+    showToast(
+      "이름이 저장되었습니다."
+    );
+
+  }
+);
+
+
+/* ==========================================
+   통계 선택
+========================================== */
+
+document
+  .querySelectorAll("[data-stat]")
+  .forEach(
+    button=>{
+
+      button.onclick =
+        ()=>{
+
+          statsMode =
+            button.dataset.stat;
+
+
+          document
+            .querySelectorAll("[data-stat]")
+            .forEach(
+              item =>
+                item.classList
+                  .remove("active")
+            );
+
+
+          button
+            .classList
+            .add("active");
+
+
+          renderStats();
+
+        };
+
+    }
+  );
+
+
+/* ==========================================
+   전체 초기화
+========================================== */
+
+document.getElementById(
+  "resetAll"
+).onclick = ()=>{
+
+  if(
+    confirm(
+      "멤버와 모든 출석 기록을 정말 초기화할까요?"
+    )
+  ){
+
+    data =
+      structuredClone(
+        defaultData
+      );
+
+
+    saveData();
+
+    renderAll();
+
+    showToast(
+      "전체 데이터가 초기화되었습니다."
+    );
+
+  }
+
+};
+
+
+/* ==========================================
+   HTML 문자 처리
+========================================== */
+
+function escapeHtml(value){
+
+  return String(value)
+    .replace(
+      /[&<>"']/g,
+      character =>({
+
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#039;"
+
+      })[character]
+    );
+
+}
+
+
+function escapeAttr(value){
+
+  return escapeHtml(value);
+
+}
+
+
+/* ==========================================
+   상단 고정 높이 자동 계산
+========================================== */
+
+function updateHeaderHeight(){
+
+  const header =
+    document.getElementById(
+      "topHeader"
+    );
+
+
+  const height =
+    header.offsetHeight;
+
+
+  document.documentElement
+    .style
+    .setProperty(
+      "--header-h",
+      height + "px"
+    );
+
+}
+
+
+window.addEventListener(
+  "resize",
+  updateHeaderHeight
+);
+
+
+window.addEventListener(
+  "orientationchange",
+  ()=>{
+    setTimeout(
+      updateHeaderHeight,
+      100
+    );
+  }
+);
+
+
+/*
+   글꼴 로딩 후 높이 재계산
+*/
+
+if(document.fonts){
+
+  document.fonts.ready.then(
+    updateHeaderHeight
+  );
+
+}
+
+
+/*
+   상단 높이가 바뀌면 자동 재계산
+*/
+
+if(window.ResizeObserver){
+
+  const observer =
+    new ResizeObserver(
+      updateHeaderHeight
+    );
+
+
+  observer.observe(
+    document.getElementById(
+      "topHeader"
+    )
+  );
+
+}
+
+
+/* ==========================================
+   최초 실행
+========================================== */
+
+renderAll();
+
+updateHeaderHeight();
+
+</script>
+
+</body>
+</html>
